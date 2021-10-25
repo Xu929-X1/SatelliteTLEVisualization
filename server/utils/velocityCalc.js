@@ -2,7 +2,7 @@ const satellite = require('satellite.js');
 const fs = require('fs');
 module.exports = exports = function velocityCalc() {
     let res = {};
-    fs.readFile('../starlink.json', 'utf-8', (err, data) => {
+    fs.readFile('starlink.json', 'utf-8', (err, data) => {
         if (err) console.log(err);
         data = JSON.parse(data)
         for (const singleData in data) {
@@ -10,7 +10,7 @@ module.exports = exports = function velocityCalc() {
             let posNVelo = satellite.propagate(tempRec, new Date());
             if(posNVelo && posNVelo.position) res[singleData] = posNVelo;
         }
-        fs.writeFile('./rawPV.json', JSON.stringify(res), (err) => {
+        fs.writeFile('./utils/rawPV.json', JSON.stringify(res), (err) => {
             if (err) console.log(err);
         })
     });

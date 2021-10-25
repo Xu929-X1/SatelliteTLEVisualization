@@ -1,10 +1,18 @@
 "use strict"
+let satellitePosAndVelo = {};
 window.addEventListener("load", () => {
     init();
     const socket = io();
     socket.on('connect', socket=>{
-        console.log(socket.id)
-    })
+    });
+    socket.on('init', msg=>[
+        console.log(msg)
+    ])
+    socket.on('updateData', msg=>{
+        satellitePosAndVelo = msg;
+        console.log(satellitePosAndVelo);
+        console.log('updated!')
+    });
 });
 function init() {
     const scene = new THREE.Scene();
