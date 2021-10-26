@@ -78,7 +78,7 @@ function init() {
     let raycaster = new THREE.Raycaster();
 
 
-    for (let i = 0; i < 23; i++) {
+    for (let i = 0; i < 24; i++) {
         let circleM = new THREE.LineBasicMaterial({ color: 0x666666 });
         let circleG = new THREE.CircleGeometry(earthOribitLength + .05, 100);
         let circle = new THREE.Line(circleG, circleM);

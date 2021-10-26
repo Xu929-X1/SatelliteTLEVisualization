@@ -20,7 +20,7 @@ io.on("connection", socket => {
     socket.emit('init', starLinkData);
     setInterval(() => {
         veloCalc();
-        console.log('calc done')
+        console.log('calc done');
         // console.log(starLinkData);
         socket.emit('updateData', starLinkData);
     }, 10000);
