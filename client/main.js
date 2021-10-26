@@ -6,8 +6,10 @@ import { ConvexGeometry } from './js/geometries/ConvexGeometry.js';
 import * as BufferGeometryUtils from './js/utils/BufferGeometryUtils.js';
 import { GUI } from './js/libs/dat.gui.module.js';
 import { LightProbeGenerator } from './js/lights/LightProbeGenerator.js';
-const clock = new THREE.Clock();
-
+let INTERSECTED;
+const pointer = new THREE.Vector2();
+let dependencies = [];
+const keyPairs = {};
 const API = {
     lightProbeIntensity: 1.0,
     directionalLightIntensity: 0.2,
@@ -45,9 +47,22 @@ function init() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    const axesHelper = new THREE.AxesHelper(20);
-    axesHelper.setColors(0x999999, 0x999999, 0x999999);
-    scene.add(axesHelper);
+    //reference: https://github.com/stemkoski/stemkoski.github.com/blob/master/Three.js/Mouse-Tooltip.html
+    const canvas1 = document.createElement('canvas')
+    let context1 = canvas1.getContext('2d');
+    context1.font = "Bold 20px Arial";
+    context1.fillStyle = "rgba(0,0,0,0.95)";
+    let texture1 = new THREE.Texture(canvas1)
+    texture1.needsUpdate = true;
+    var spriteMaterial = new THREE.SpriteMaterial({ map: texture1, useScreenCoordinates: true });
+
+    let sprite1 = new THREE.Sprite(spriteMaterial);
+    sprite1.scale.set(200, 100, 1.0);
+    sprite1.position.set(50, 50, 0);
+    scene.add(sprite1);
+    // const axesHelper = new THREE.AxesHelper(20);
+    // axesHelper.setColors(0x999999, 0x999999, 0x999999);
+    // scene.add(axesHelper);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.minDistance = 10;
@@ -60,11 +75,14 @@ function init() {
     directionalLight.position.set(50, 50, 50);
     scene.add(directionalLight);
 
-    for (let i = 0; i < 24; i++) {
+    let raycaster = new THREE.Raycaster();
+
+
+    for (let i = 0; i < 23; i++) {
         let circleM = new THREE.LineBasicMaterial({ color: 0x666666 });
         let circleG = new THREE.CircleGeometry(earthOribitLength + .05, 100);
         let circle = new THREE.Line(circleG, circleM);
-        circle.rotation.y = (Math.PI / 24) * i;
+        circle.rotation.y = (Math.PI / 23) * i;
         scene.add(circle);
     }
 
@@ -78,52 +96,80 @@ function init() {
     scene.add(sphere);
     (function animate() {
         requestAnimationFrame(animate); //loop call
-        const delta = clock.getDelta();
+        raycaster.setFromCamera(pointer, camera);
+        const intersects = raycaster.intersectObjects(scene.children, false);
+        let label = document.createElement('label');
+        if (intersects.length) {
+            if (INTERSECTED != intersects[0].object) {
+                if (INTERSECTED) INTERSECTED.material.color.setHex(INTERSECTED.currentHex);
+
+                INTERSECTED = intersects[0].object;
+                INTERSECTED.currentHex = INTERSECTED.material.color.getHex();
+                INTERSECTED.material.color.setHex(0xff0000);
+                if (keyPairs) {
+                    let name = getKeyByVal(keyPairs, INTERSECTED.uuid)
+                    if (name) {
+                        let metrics = context1.measureText(name);
+                        let width = metrics.width;
+                        context1.fillStyle = "rgba(0,0,0,0.95)"; // black border
+                        context1.fillRect(0, 0, width + 8, 20 + 8);
+                        context1.fillStyle = "rgba(255,255,255,0.95)"; // white filler
+                        context1.fillRect(2, 2, width + 4, 20 + 4);
+                        context1.fillStyle = "rgba(0,0,0,1)"; // text color
+                        context1.fillText(name, 4, 20);
+                        texture1.needsUpdate = true;
+                        console.log(name);
+                    }
+                }
+            }
+        } else {
+            if (INTERSECTED) INTERSECTED.material.color.setHex(INTERSECTED.currentHex);
+            context1.clearRect(0,0,300,300);
+            INTERSECTED = null;
+
+        }
         renderer.render(scene, camera);
         // controls.update();
     })();
 
-    const dependencies = [];
-    const keyPairs = {};
+
     function drawSatellites(satelliteObject) {
+        if (dependencies[0]) {
+            dependencies.forEach((element) => {
+                let obj = scene.getObjectByProperty('uuid', element);
+                scene.remove(obj);
+                obj = null;
+                //TODO: trash guy collect this
+            });
+            dependencies = [];
+        }
         // let constellation = new THREE.ShapeGeometry();
         for (let satellite in satelliteObject) {
             let { x, y, z } = satelliteObject[satellite].position;
             x /= 1000;
             y /= 1000;
             z /= 1000;
-            let satelliteInstance = new THREE.SphereGeometry(.05, 100, 100);
+            let satelliteInstance = new THREE.SphereGeometry(.05, 10, 10);
             const Smaterial = new THREE.MeshStandardMaterial({
                 color: 0xffffff,
-                metalness: 1,
+                metalness: 0,
                 roughness: 0
             });
             let satelliteSphere = new THREE.Mesh(satelliteInstance, Smaterial);
             satelliteSphere.position.set(x, y, z);
             dependencies.push(satelliteSphere.uuid);
+            //for tooltip
             keyPairs[satellite] = satelliteSphere.uuid;
             scene.add(satelliteSphere);
         }
     }
-    function remove(arr){
-        arr.forEach((element) => {
-            let obj = scene.getObjectByProperty('uuid', element);
-            obj.geometry.dispose();
-            obj.material.dispose();
-            scene.remove(obj);
-        });
-    }
     drawSatellites(satellitePosAndVelo);
     setInterval(() => {
-        remove(dependencies)
         drawSatellites(satellitePosAndVelo);
     }, 10000);
 
-
-
-
     window.addEventListener("resize", updateView);
-
+    document.addEventListener('mousemove', onMouseMove);
 
     //utils
     //window resize
@@ -134,9 +180,13 @@ function init() {
     }
     // const gui = new GUI({width: 300});
     // const lightControl = gui.addFolder('Light');
-
+    function onMouseMove(event) {
+        // console.log(event)
+        sprite1.position.set(event.clientX, event.clientY - 20, 0);
+        pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+        pointer.y = - (event.clientY / window.innerHeight) * 2 + 1;
+    }
+    function getKeyByVal(obj, val) {
+        return Object.keys(obj).find(key => obj[key] === val);
+    }
 }
-
-
-
-
