@@ -23,5 +23,5 @@ io.on("connection", socket => {
         console.log('calc done')
         console.log(starLinkData);
         socket.emit('updateData', starLinkData);
-    }, 3e5);
+    }, 10000);
 });
