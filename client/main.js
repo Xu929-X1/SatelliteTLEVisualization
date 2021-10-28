@@ -10,6 +10,7 @@ let INTERSECTED;
 const pointer = new THREE.Vector2();
 let dependencies = [];
 const keyPairs = {};
+const socket = io();
 const API = {
     lightProbeIntensity: 1.0,
     directionalLightIntensity: 0.2,
@@ -18,7 +19,7 @@ const API = {
 
 window.addEventListener("load", () => {
     init();
-    const socket = io();
+    
     socket.on('connect', socket => {
     });
     socket.on('init', msg => {
@@ -26,10 +27,7 @@ window.addEventListener("load", () => {
         // console.log(msg)
         satellitePosAndVelo = msg;
     })
-    socket.on('updateData', msg => {
-        satellitePosAndVelo = msg;
-        // console.log(`get data: ${Object.keys(msg)}`)
-    });
+    
 });
 
 function init() {
@@ -145,7 +143,11 @@ function init() {
         }
         // let constellation = new THREE.ShapeGeometry();
         for (let satellite in satelliteObject) {
-            let { x, y, z } = satelliteObject[satellite].position;
+            // console.log(typeof satelliteObject)
+            let x = satelliteObject[satellite]['position']['x'];
+            let y = satelliteObject[satellite]['position']['y'];
+            let z = satelliteObject[satellite]['position']['z'];
+
             x /= 1000;
             y /= 1000;
             z /= 1000;
@@ -164,10 +166,12 @@ function init() {
         }
     }
     drawSatellites(satellitePosAndVelo);
-    setInterval(() => {
-        drawSatellites(satellitePosAndVelo);
-    }, 10000);
-
+    socket.on('updateData', msg => {
+        // satellitePosAndVelo = msg;
+        console.log(msg)
+        drawSatellites(JSON.parse(msg));
+        // console.log(`get data: ${Object.keys(msg)}`)
+    });
     window.addEventListener("resize", updateView);
     document.addEventListener('mousemove', onMouseMove);
 
@@ -182,7 +186,7 @@ function init() {
     // const lightControl = gui.addFolder('Light');
     function onMouseMove(event) {
         // console.log(event)
-        sprite1.position.set(event.clientX, event.clientY - 20, 0);
+        sprite1.position.set(event.clientX, event.clientY);
         pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
         pointer.y = - (event.clientY / window.innerHeight) * 2 + 1;
     }
