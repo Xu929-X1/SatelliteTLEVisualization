@@ -20,12 +20,9 @@ io.on("connection", socket => {
     socket.emit('init', starLinkData);
     setInterval(async () => {
         veloCalc();
-        // console.log('calc done');
         let updatedData = await fs.readFileSync('./rawPV.json', 'utf-8', (err)=>{
             if(err) console.log(err);
         });
-        // console.log(updatedData + '\n');
-        // console.log(updatedData)
         socket.emit('updateData', updatedData);
     }, 5000);
 });

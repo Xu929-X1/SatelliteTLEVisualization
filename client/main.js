@@ -143,21 +143,19 @@ function init() {
         }
         // let constellation = new THREE.ShapeGeometry();
         for (let satellite in satelliteObject) {
-            // console.log(typeof satelliteObject)
             let x = satelliteObject[satellite]['position']['x'];
             let y = satelliteObject[satellite]['position']['y'];
             let z = satelliteObject[satellite]['position']['z'];
-
             x /= 1000;
             y /= 1000;
             z /= 1000;
             let satelliteInstance = new THREE.SphereGeometry(.05, 10, 10);
-            const Smaterial = new THREE.MeshStandardMaterial({
+            const sMaterial = new THREE.MeshStandardMaterial({
                 color: 0xffffff,
                 metalness: 0,
                 roughness: 0
             });
-            let satelliteSphere = new THREE.Mesh(satelliteInstance, Smaterial);
+            let satelliteSphere = new THREE.Mesh(satelliteInstance, sMaterial);
             satelliteSphere.position.set(x, y, z);
             dependencies.push(satelliteSphere.uuid);
             //for tooltip
