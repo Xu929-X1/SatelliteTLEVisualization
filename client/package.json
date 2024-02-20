@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "rollup": "^0.58.2",
+    "rollup": "^0.68.2",
     "rollup-plugin-copy": "^0.2.3",
     "socket.io": "^4.6.0",
     "webpack": "^5.76.0",
