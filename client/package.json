@@ -10,7 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "rollup": "^0.58.2",
-    "rollup-plugin-copy": "^0.2.3",
+    "rollup-plugin-copy": "^0.3.0",
     "socket.io": "^4.6.0",
     "webpack": "^5.76.0",
     "webpack-cli": "^4.9.1"
